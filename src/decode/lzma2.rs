@@ -39,7 +39,7 @@ impl Lzma2Decoder {
     ///
     /// This function may not allocate memory and will attempt to reuse any
     /// previously allocated resources.
-    #[cfg(feature = "raw_decoder")]
+    #[cfg(feature = "raw")]
     pub fn reset(&mut self) {
         self.lzma_state.reset_state(LzmaProperties {
             lc: 0,

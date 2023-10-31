@@ -21,10 +21,10 @@ use std::io;
 /// Compression helpers.
 pub mod compress {
     #[cfg(feature = "raw")]
-    #[cfg_attr(docsrs, doc(cfg(raw_encoder)))]
+    #[cfg_attr(docsrs, doc(cfg(raw)))]
     pub mod raw {
         //! Raw decoding primitives for LZMA/LZMA2 streams.
-        pub use crate::encoder::dumbencoder::Encoder;
+        pub use crate::encode::dumbencoder::Encoder;
     }
 
     pub use crate::encode::options::*;
@@ -35,10 +35,10 @@ pub mod decompress {
     pub use crate::decode::options::*;
 
     #[cfg(feature = "raw")]
-    #[cfg_attr(docsrs, doc(cfg(raw_decoder)))]
+    #[cfg_attr(docsrs, doc(cfg(raw)))]
     pub mod raw {
         //! Raw decoding primitives for LZMA/LZMA2 streams.
-        pub use crate::decode::lzma::{LzmaDecoder, LzmaParams, LzmaProperties};
+        pub use crate::decode::lzma::LzmaDecoder;
         pub use crate::decode::lzma2::Lzma2Decoder;
     }
 
@@ -46,6 +46,8 @@ pub mod decompress {
     #[cfg_attr(docsrs, doc(cfg(stream)))]
     pub use crate::decode::stream::Stream;
 }
+
+pub use crate::common::lzma::{LzmaParams, LzmaProperties};
 
 /// Decompress LZMA data with default
 /// [`Options`](decompress/struct.Options.html).

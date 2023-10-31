@@ -4,6 +4,7 @@ use std::io;
 #[cfg(test)]
 use crate::util::const_assert;
 
+#[derive(Debug)]
 pub struct RangeEncoder<'a, W>
 where
     W: 'a + io::Write,

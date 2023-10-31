@@ -1,8 +1,48 @@
 use crate::compress::{Options, UnpackedSize};
 use crate::encode::rangecoder;
+use crate::{error, LzmaParams};
 use byteorder::{LittleEndian, WriteBytesExt};
 use std::io;
 
+impl LzmaParams {
+    /// Write LZMA parameters to the LZMA stream header.
+    pub fn write_header<W>(&self, stream: &mut W) -> error::Result<()>
+    where
+        W: io::Write,
+    {
+        // Properties
+        let properties = self.properties;
+        let props = (properties.lc + 9 * (properties.lp + 5 * properties.pb)) as u8;
+        lzma_info!("{:?}", properties);
+        stream.write_u8(props)?;
+
+        // Dictionary
+        lzma_info!("Dict size: {}", self.dict_size);
+        stream.write_u32::<LittleEndian>(self.dict_size)?;
+
+        // Unpacked size
+        // todo: make behavior symetrical with `read_header`
+        match self.unpacked_size {
+            Some(size) => {
+                match size {
+                    0xFFFF_FFFF_FFFF_FFFF => {
+                        lzma_info!("Unpacked size: unknown");
+                    }
+                    size => {
+                        lzma_info!("Unpacked size: {}", size);
+                    }
+                }
+                stream.write_u64::<LittleEndian>(size)?;
+            }
+            None => {}
+        };
+
+        Ok(())
+    }
+}
+
+/// Raw encoder for LZMA.
+#[derive(Debug)]
 pub struct Encoder<'a, W>
 where
     W: 'a + io::Write,
@@ -16,12 +56,14 @@ where
 const LC: u32 = 3;
 const LP: u32 = 0;
 const PB: u32 = 2;
+const DICT_SIZE: u32 = 0x0080_0000;
 
 impl<'a, W> Encoder<'a, W>
 where
     W: io::Write,
 {
-    #[cfg(feature = "raw_decoder")]
+    #[cfg(feature = "raw")]
+    /// Create a new raw encoder
     pub fn new(stream: &'a mut W, options: &Options) -> Self {
         Encoder {
             rangecoder: rangecoder::RangeEncoder::new(stream),
@@ -31,17 +73,17 @@ where
         }
     }
 
+    /// Create a new encoder by reading from a stream.
+    /// This includes reading the header.
     pub fn from_stream(stream: &'a mut W, options: &Options) -> io::Result<Self> {
-        let dict_size = 0x0080_0000;
-
         // Properties
         let props = (LC + 9 * (LP + 5 * PB)) as u8;
         lzma_info!("Properties {{ lc: {}, lp: {}, pb: {} }}", LC, LP, PB);
         stream.write_u8(props)?;
 
         // Dictionary
-        lzma_info!("Dict size: {}", dict_size);
-        stream.write_u32::<LittleEndian>(dict_size)?;
+        lzma_info!("Dict size: {}", DICT_SIZE);
+        stream.write_u32::<LittleEndian>(DICT_SIZE)?;
 
         // Unpacked size
         match &options.unpacked_size {
@@ -71,6 +113,8 @@ where
         Ok(encoder)
     }
 
+    /// Process LZMA stream data.
+    /// Will iterate through bytes and encode them sequential until finished.
     pub fn process<R>(mut self, input: R) -> io::Result<()>
     where
         R: io::Read,

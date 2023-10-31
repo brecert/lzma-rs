@@ -1,8 +1,9 @@
 use crate::decode::lzbuffer::{LzBuffer, LzCircularBuffer};
-use crate::decode::lzma::{DecoderState, LzmaParams};
+use crate::decode::lzma::DecoderState;
 use crate::decode::rangecoder::RangeDecoder;
 use crate::decompress::Options;
 use crate::error::Error;
+use crate::LzmaParams;
 use std::fmt::Debug;
 use std::io::{self, BufRead, Cursor, Read, Write};
 
