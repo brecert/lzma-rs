@@ -5,7 +5,7 @@ use std::io;
 
 /// Raw encoder for LZMA.
 #[derive(Debug)]
-pub struct Encoder<'a, W>
+pub struct LzmaEncoder<'a, W>
 where
     W: 'a + io::Write,
 {
@@ -20,14 +20,25 @@ const LP: u32 = 0;
 const PB: u32 = 2;
 const DICT_SIZE: u32 = 0x0080_0000;
 
-impl<'a, W> Encoder<'a, W>
+impl<'a, W> LzmaEncoder<'a, W>
 where
     W: io::Write,
 {
     #[cfg(feature = "raw")]
     /// Create a new raw encoder
-    pub fn new(stream: &'a mut W, options: &Options) -> Self {
-        Encoder {
+    pub fn new(stream: &'a mut W) -> Self {
+        LzmaEncoder {
+            rangecoder: rangecoder::RangeEncoder::new(stream),
+            literal_probs: [[0x400; 0x300]; 8],
+            is_match: [0x400; 4],
+            unpacked_size: UnpackedSize::SkipWritingToHeader,
+        }
+    }
+
+    #[cfg(feature = "raw")]
+    /// Create a new raw encoder with options
+    pub fn new_with_options(stream: &'a mut W, options: &Options) -> Self {
+        LzmaEncoder {
             rangecoder: rangecoder::RangeEncoder::new(stream),
             literal_probs: [[0x400; 0x300]; 8],
             is_match: [0x400; 4],
@@ -65,7 +76,7 @@ where
             UnpackedSize::SkipWritingToHeader => {}
         };
 
-        let encoder = Encoder {
+        let encoder = LzmaEncoder {
             rangecoder: rangecoder::RangeEncoder::new(stream),
             literal_probs: [[0x400; 0x300]; 8],
             is_match: [0x400; 4],

@@ -24,7 +24,7 @@ pub mod compress {
     #[cfg_attr(docsrs, doc(cfg(raw)))]
     pub mod raw {
         //! Raw decoding primitives for LZMA/LZMA2 streams.
-        pub use crate::encode::dumbencoder::Encoder;
+        pub use crate::encode::lzma::LzmaEncoder;
     }
 
     pub use crate::encode::options::*;
@@ -89,7 +89,7 @@ pub fn lzma_compress_with_options<R: io::BufRead, W: io::Write>(
     output: &mut W,
     options: &compress::Options,
 ) -> io::Result<()> {
-    let encoder = encode::dumbencoder::Encoder::from_stream(output, options)?;
+    let encoder = encode::lzma::LzmaEncoder::from_stream(output, options)?;
     encoder.process(input)
 }
 

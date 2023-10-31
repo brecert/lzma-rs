@@ -37,11 +37,11 @@ impl LzmaProperties {
 /// LZMA decompression parameters.
 pub struct LzmaParams {
     /// The LZMA "lclppb" decompression properties.
-    pub(crate) properties: LzmaProperties,
+    pub properties: LzmaProperties,
     /// The dictionary size to use when decompressing.
-    pub(crate) dict_size: u32,
+    pub dict_size: u32,
     /// The size of the unpacked data.
-    pub(crate) unpacked_size: Option<u64>,
+    pub unpacked_size: Option<u64>,
 }
 
 impl LzmaParams {
