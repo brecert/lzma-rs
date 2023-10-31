@@ -1,45 +1,7 @@
 use crate::compress::{Options, UnpackedSize};
 use crate::encode::rangecoder;
-use crate::{error, LzmaParams};
 use byteorder::{LittleEndian, WriteBytesExt};
 use std::io;
-
-impl LzmaParams {
-    /// Write LZMA parameters to the LZMA stream header.
-    pub fn write_header<W>(&self, stream: &mut W) -> error::Result<()>
-    where
-        W: io::Write,
-    {
-        // Properties
-        let properties = self.properties;
-        let props = (properties.lc + 9 * (properties.lp + 5 * properties.pb)) as u8;
-        lzma_info!("{:?}", properties);
-        stream.write_u8(props)?;
-
-        // Dictionary
-        lzma_info!("Dict size: {}", self.dict_size);
-        stream.write_u32::<LittleEndian>(self.dict_size)?;
-
-        // Unpacked size
-        // todo: make behavior symetrical with `read_header`
-        match self.unpacked_size {
-            Some(size) => {
-                match size {
-                    0xFFFF_FFFF_FFFF_FFFF => {
-                        lzma_info!("Unpacked size: unknown");
-                    }
-                    size => {
-                        lzma_info!("Unpacked size: {}", size);
-                    }
-                }
-                stream.write_u64::<LittleEndian>(size)?;
-            }
-            None => {}
-        };
-
-        Ok(())
-    }
-}
 
 /// Raw encoder for LZMA.
 #[derive(Debug)]

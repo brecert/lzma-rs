@@ -1,10 +1,8 @@
 use crate::common::lzma::{LzmaParams, LzmaProperties};
 use crate::decode::lzbuffer::{LzBuffer, LzCircularBuffer};
 use crate::decode::rangecoder::{BitTree, LenDecoder, RangeDecoder};
-use crate::decompress::{Options, UnpackedSize};
 use crate::error;
 use crate::util::vec2d::Vec2D;
-use byteorder::{LittleEndian, ReadBytesExt};
 use std::io;
 
 /// Maximum input data that can be processed in one iteration.
@@ -37,76 +35,6 @@ enum ProcessingMode {
 enum ProcessingStatus {
     Continue,
     Finished,
-}
-
-impl LzmaParams {
-    /// Read LZMA parameters from the LZMA stream header.
-    pub fn read_header<R>(input: &mut R, options: &Options) -> error::Result<LzmaParams>
-    where
-        R: io::BufRead,
-    {
-        // Properties
-        let props = input.read_u8().map_err(error::Error::HeaderTooShort)?;
-
-        let mut pb = props as u32;
-        if pb >= 225 {
-            return Err(error::Error::LzmaError(format!(
-                "LZMA header invalid properties: {} must be < 225",
-                pb
-            )));
-        }
-
-        let lc: u32 = pb % 9;
-        pb /= 9;
-        let lp: u32 = pb % 5;
-        pb /= 5;
-
-        lzma_info!("Properties {{ lc: {}, lp: {}, pb: {} }}", lc, lp, pb);
-
-        // Dictionary
-        let dict_size_provided = input
-            .read_u32::<LittleEndian>()
-            .map_err(error::Error::HeaderTooShort)?;
-        let dict_size = if dict_size_provided < 0x1000 {
-            0x1000
-        } else {
-            dict_size_provided
-        };
-
-        lzma_info!("Dict size: {}", dict_size);
-
-        // Unpacked size
-        let unpacked_size: Option<u64> = match options.unpacked_size {
-            UnpackedSize::ReadFromHeader => {
-                let unpacked_size_provided = input
-                    .read_u64::<LittleEndian>()
-                    .map_err(error::Error::HeaderTooShort)?;
-                let marker_mandatory: bool = unpacked_size_provided == 0xFFFF_FFFF_FFFF_FFFF;
-                if marker_mandatory {
-                    None
-                } else {
-                    Some(unpacked_size_provided)
-                }
-            }
-            UnpackedSize::ReadHeaderButUseProvided(x) => {
-                input
-                    .read_u64::<LittleEndian>()
-                    .map_err(error::Error::HeaderTooShort)?;
-                x
-            }
-            UnpackedSize::UseProvided(x) => x,
-        };
-
-        lzma_info!("Unpacked size: {:?}", unpacked_size);
-
-        let params = LzmaParams {
-            properties: LzmaProperties { lc, lp, pb },
-            dict_size,
-            unpacked_size,
-        };
-
-        Ok(params)
-    }
 }
 
 #[derive(Debug)]

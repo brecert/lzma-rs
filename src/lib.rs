@@ -47,7 +47,12 @@ pub mod decompress {
     pub use crate::decode::stream::Stream;
 }
 
-pub use crate::common::lzma::{LzmaParams, LzmaProperties};
+#[cfg(feature = "raw")]
+#[cfg_attr(docsrs, doc(cfg(raw)))]
+pub mod raw {
+    //! Common types shared between raw interfaces.
+    pub use crate::common::lzma::{LzmaParams, LzmaProperties};
+}
 
 /// Decompress LZMA data with default
 /// [`Options`](decompress/struct.Options.html).
