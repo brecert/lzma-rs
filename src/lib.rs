@@ -7,6 +7,7 @@
 #[macro_use]
 mod macros;
 
+mod common;
 mod decode;
 mod encode;
 
@@ -19,6 +20,13 @@ use std::io;
 
 /// Compression helpers.
 pub mod compress {
+    #[cfg(feature = "raw")]
+    #[cfg_attr(docsrs, doc(cfg(raw_encoder)))]
+    pub mod raw {
+        //! Raw decoding primitives for LZMA/LZMA2 streams.
+        pub use crate::encoder::dumbencoder::Encoder;
+    }
+
     pub use crate::encode::options::*;
 }
 
@@ -26,7 +34,7 @@ pub mod compress {
 pub mod decompress {
     pub use crate::decode::options::*;
 
-    #[cfg(feature = "raw_decoder")]
+    #[cfg(feature = "raw")]
     #[cfg_attr(docsrs, doc(cfg(raw_decoder)))]
     pub mod raw {
         //! Raw decoding primitives for LZMA/LZMA2 streams.
@@ -54,7 +62,7 @@ pub fn lzma_decompress_with_options<R: io::BufRead, W: io::Write>(
     output: &mut W,
     options: &decompress::Options,
 ) -> error::Result<()> {
-    let params = decode::lzma::LzmaParams::read_header(input, options)?;
+    let params = common::lzma::LzmaParams::read_header(input, options)?;
     let mut decoder = decode::lzma::LzmaDecoder::new(params, options.memlimit)?;
     decoder.decompress(input, output)
 }

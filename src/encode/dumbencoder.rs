@@ -21,6 +21,16 @@ impl<'a, W> Encoder<'a, W>
 where
     W: io::Write,
 {
+    #[cfg(feature = "raw_decoder")]
+    pub fn new(stream: &'a mut W, options: &Options) -> Self {
+        Encoder {
+            rangecoder: rangecoder::RangeEncoder::new(stream),
+            literal_probs: [[0x400; 0x300]; 8],
+            is_match: [0x400; 4],
+            unpacked_size: options.unpacked_size,
+        }
+    }
+
     pub fn from_stream(stream: &'a mut W, options: &Options) -> io::Result<Self> {
         let dict_size = 0x0080_0000;
 

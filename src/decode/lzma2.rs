@@ -1,5 +1,6 @@
+use crate::common::lzma::LzmaProperties;
 use crate::decode::lzbuffer::LzBuffer;
-use crate::decode::lzma::{DecoderState, LzmaProperties};
+use crate::decode::lzma::DecoderState;
 use crate::decode::{lzbuffer, rangecoder};
 use crate::error;
 use byteorder::{BigEndian, ReadBytesExt};
